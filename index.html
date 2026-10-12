@@ -460,8 +460,9 @@ function generate(){
       state.reserved = 0;
       state.used++;
       state.concurrency--;
-      post("release", refund, "refund: ceiling − actual");
-      post("settle", -tier.actual, "actual synthesis cost");
+      post("release", refund, "release unused reserve (ceiling − actual)");
+      // The 0.154 that stays reserved IS the charge — no separate debit entry,
+      // so the ledger sums exactly:  −ceiling + (ceiling − actual) = −actual.
 
       $("mSet").textContent = money(tier.actual);
       $("mRef").textContent = money(refund);
