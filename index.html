@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>PreMeet — MVP prototype</title>
+<style>
+  :root{
+    --bg:#FAFAF9; --card:#FFFFFF; --ink:#14161A; --ink2:#3F464D; --muted:#6B7280;
+    --line:#E4E6E9; --line2:#EFF0F2;
+    --accent:#4338CA; --accent-soft:#EEF0FC; --accent-ink:#3730A3;
+    --ok:#0F7B4F; --ok-soft:#E7F5EE; --warn:#B4442E; --warn-soft:#FBEDE9; --amber:#8A6100; --amber-soft:#FBF3E0;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    font-size:14px;line-height:1.5;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+
+  header{border-bottom:1px solid var(--line);background:var(--card);position:sticky;top:0;z-index:10}
+  .hbar{display:flex;align-items:center;justify-content:space-between;height:58px;gap:16px}
+  .brand{display:flex;align-items:center;gap:10px;font-weight:650;letter-spacing:-.02em;font-size:17px}
+  .brand .dot{width:9px;height:9px;background:var(--accent);border-radius:2px}
+  .tag{font:600 10px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;
+    color:var(--accent-ink);background:var(--accent-soft);padding:5px 7px;border-radius:3px}
+  .hlinks{display:flex;gap:16px;font-size:13px;color:var(--muted)}
+  .hlinks a{color:var(--muted)}
+
+  .banner{background:var(--amber-soft);border-bottom:1px solid #F0E2C4;color:#5C4200;
+    font-size:12.5px;padding:9px 0}
+  .banner b{font-weight:650}
+
+  main{padding:26px 0 60px}
+  .grid{display:grid;grid-template-columns:1.62fr 1fr;gap:20px;align-items:start}
+  @media(max-width:900px){.grid{grid-template-columns:1fr}}
+  .col{display:flex;flex-direction:column;gap:20px}
+
+  .card{background:var(--card);border:1px solid var(--line);border-radius:6px}
+  .card .hd{padding:14px 16px;border-bottom:1px solid var(--line2);display:flex;
+    align-items:center;justify-content:space-between;gap:10px}
+  .card .hd h2{font-size:13px;font-weight:650;letter-spacing:.01em}
+  .card .hd .sub{font-size:12px;color:var(--muted)}
+  .card .bd{padding:16px}
+
+  label.f{display:block;font-size:11px;font-weight:650;letter-spacing:.08em;text-transform:uppercase;
+    color:var(--muted);margin-bottom:6px}
+  input[type=text]{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:5px;
+    font-size:14px;color:var(--ink);background:var(--card);font-family:inherit}
+  input[type=text]:focus{outline:none;border-color:var(--accent)}
+  .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .tiers{display:flex;gap:8px;margin:14px 0}
+  .tier{flex:1;border:1px solid var(--line);border-radius:5px;padding:10px;cursor:pointer;background:var(--card)}
+  .tier.sel{border-color:var(--accent);background:var(--accent-soft)}
+  .tier .tt{font-size:13px;font-weight:650}
+  .tier .ts{font-size:11px;color:var(--muted);font-family:var(--mono)}
+  .tier:focus{outline:2px solid var(--accent);outline-offset:1px}
+
+  button{font-family:inherit;font-size:13.5px;font-weight:600;border:1px solid var(--line);
+    background:var(--card);color:var(--ink);border-radius:5px;padding:10px 14px;cursor:pointer}
+  button:hover{border-color:#C9CDD3}
+  button.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+  button.primary:hover{background:#3B30B8}
+  button.wide{width:100%}
+  button:disabled{opacity:.5;cursor:not-allowed}
+  .btnrow{display:flex;gap:8px;margin-top:14px}
+
+  .steps{list-style:none;display:flex;flex-direction:column;gap:0}
+  .step{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line2);
+    font-size:13px;color:var(--muted)}
+  .step:last-child{border-bottom:none}
+  .step .ic{width:16px;height:16px;border-radius:50%;border:1.5px solid var(--line);
+    display:flex;align-items:center;justify-content:center;font-size:10px;color:#fff;flex:none}
+  .step.run .ic{border-color:var(--accent);border-right-color:transparent;animation:spin .7s linear infinite}
+  .step.done{color:var(--ink)}
+  .step.done .ic{background:var(--ok);border-color:var(--ok)}
+  .step.done .ic::after{content:"✓"}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  .meter{margin-top:14px;padding-top:14px;border-top:1px solid var(--line2);
+    display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .meter .m{font-family:var(--mono)}
+  .meter .m .l{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+  .meter .m .v{font-size:16px;font-weight:600;margin-top:3px}
+
+  .brief h3{font-size:18px;letter-spacing:-.02em;margin-bottom:2px}
+  .brief .af{font-size:12.5px;color:var(--muted);margin-bottom:14px}
+  .avatar{width:52px;height:52px;border-radius:4px;background:var(--accent-soft);color:var(--accent-ink);
+    display:flex;align-items:center;justify-content:center;font-weight:650;font-size:17px;flex:none}
+  .bhead{display:flex;gap:14px;align-items:center;margin-bottom:14px}
+  .sec{margin-top:14px}
+  .sec .k{font:600 10px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin-bottom:7px}
+  .sec ul{list-style:none;display:flex;flex-direction:column;gap:6px}
+  .sec li{font-size:13px;color:var(--ink2);padding-left:14px;position:relative}
+  .sec li::before{content:"";position:absolute;left:0;top:7px;width:5px;height:5px;background:var(--accent)}
+  .sec li b{color:var(--ink)}
+  .tp{display:grid;grid-template-columns:26px 1fr;gap:10px;margin-bottom:9px}
+  .tp .n{font:600 11px/1.6 var(--mono);color:var(--accent)}
+  .tp .t{font-size:13px;color:var(--ink2)}
+  .tp .t b{color:var(--ink)}
+  .srcs{margin-top:6px;font-family:var(--mono);font-size:11.5px;color:var(--muted);display:flex;flex-wrap:wrap;gap:8px}
+  .srcs span{border:1px solid var(--line);padding:2px 6px;border-radius:3px}
+
+  .planbox{display:flex;align-items:baseline;justify-content:space-between}
+  .planbox .p{font-size:15px;font-weight:650}
+  .bal{font-family:var(--mono);font-size:26px;font-weight:600;letter-spacing:-.02em;margin:8px 0 2px}
+  .balsub{font-size:12px;color:var(--muted)}
+  .up{display:flex;gap:8px;margin-top:14px}
+  .up button{flex:1;font-size:12.5px;padding:9px 6px}
+
+  .ledger{max-height:230px;overflow:auto;font-family:var(--mono);font-size:11.5px}
+  .le{display:grid;grid-template-columns:64px 1fr auto;gap:8px;padding:7px 0;border-bottom:1px solid var(--line2)}
+  .le:last-child{border-bottom:none}
+  .le .ty{font-weight:600}
+  .le .ty.res{color:var(--amber)} .le .ty.set{color:var(--accent)} .le .ty.rel{color:var(--ok)}
+  .le .ty.den{color:var(--warn)}
+  .le .no{color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .le .am{text-align:right}
+  .empty{color:var(--muted);font-size:12.5px;font-family:inherit}
+
+  .ctrls{display:flex;flex-direction:column;gap:10px}
+  .ctl{display:flex;align-items:center;justify-content:space-between;font-size:12.5px;color:var(--ink2)}
+  .ctl .v{font-family:var(--mono);font-size:12px}
+  .pill{font:600 10px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:4px 7px;border-radius:3px}
+  .pill.ok{background:var(--ok-soft);color:var(--ok)}
+  .pill.lim{background:var(--warn-soft);color:var(--warn)}
+  .pill.off{background:#F1F2F4;color:var(--muted)}
+
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:40;
+    background:var(--ink);color:#fff;font-size:13px;padding:10px 16px;border-radius:6px;
+    opacity:0;transition:opacity .2s;pointer-events:none;max-width:90vw}
+  .toast.on{opacity:1}
+
+  .doc{border-top:1px solid var(--line);margin-top:34px;padding-top:26px}
+  .doc h2{font-size:15px;letter-spacing:-.01em;margin-bottom:4px}
+  .doc .lead{color:var(--ink2);font-size:13.5px;max-width:70ch;margin-bottom:18px}
+  .layers{display:grid;grid-template-columns:repeat(2,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+  @media(max-width:720px){.layers{grid-template-columns:1fr}}
+  .layer{background:var(--card);padding:14px 16px}
+  .layer .ln{font:600 10px/1 var(--mono);letter-spacing:.14em;color:var(--accent);margin-bottom:6px}
+  .layer h4{font-size:13px;margin-bottom:4px}
+  .layer p{font-size:12.5px;color:var(--ink2)}
+  footer{color:var(--muted);font-size:12.5px;padding:26px 0 0;border-top:1px solid var(--line);margin-top:34px}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap hbar">
+    <div class="brand"><span class="dot"></span>PreMeet <span class="tag">MVP prototype</span></div>
+    <nav class="hlinks">
+      <a href="https://agent-marsha.github.io/premeet-plan/">Plan &amp; economics</a>
+      <a href="https://agent-marsha.github.io/premeet-plan/premeet-plan.pdf">Deck (PDF)</a>
+      <a href="#security">Security</a>
+    </nav>
+  </div>
+</header>
+
+<div class="banner">
+  <div class="wrap"><b>Prototype.</b> The generation flow and the credit ledger run live in your browser.
+  Live research is not connected — <b>no API key exists in this client</b>, by design (see Security below).
+  Output shown is a sample brief.</div>
+</div>
+
+<main class="wrap">
+  <div class="grid">
+
+    <!-- LEFT -->
+    <div class="col">
+
+      <section class="card">
+        <div class="hd"><h2>Who are you meeting?</h2><span class="sub">name → brief</span></div>
+        <div class="bd">
+          <div class="row">
+            <div>
+              <label class="f" for="nm">Name</label>
+              <input id="nm" type="text" placeholder="e.g. Igor Steinmacher" value="Igor Steinmacher">
+            </div>
+            <div>
+              <label class="f" for="inst">Institution (optional)</label>
+              <input id="inst" type="text" placeholder="e.g. Northern Arizona University" value="Northern Arizona University">
+            </div>
+          </div>
+          <div class="tiers" id="tiers"></div>
+          <button id="gen" class="primary wide">Generate brief</button>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><h2>Generation pipeline</h2><span class="sub" id="plinesub">fixed sequence · budgeted</span></div>
+        <div class="bd">
+          <ul class="steps" id="steps"></ul>
+          <div class="meter">
+            <div class="m"><div class="l">Reserved</div><div class="v" id="mRes">—</div></div>
+            <div class="m"><div class="l">Settled</div><div class="v" id="mSet">—</div></div>
+            <div class="m"><div class="l">Refunded</div><div class="v" id="mRef">—</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card" id="outCard" style="display:none">
+        <div class="hd"><h2>Brief</h2><span class="sub" id="outSub">sample</span></div>
+        <div class="bd brief" id="out"></div>
+      </section>
+
+    </div>
+
+    <!-- RIGHT -->
+    <div class="col">
+
+      <section class="card">
+        <div class="hd"><h2>Account</h2><span class="sub">prepaid credits</span></div>
+        <div class="bd">
+          <div class="planbox"><span class="p" id="planName">Free</span><span class="sub" id="planPrice">$0 · 2 briefs/mo</span></div>
+          <div class="bal" id="bal">$0.000</div>
+          <div class="balsub" id="usage">0 of 2 briefs used this month</div>
+          <div class="up">
+            <button data-plan="pro">Upgrade · Pro $15</button>
+            <button data-plan="research">Research $39</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><h2>Ledger</h2><span class="sub">append-only</span></div>
+        <div class="bd">
+          <div class="ledger" id="ledger"><div class="empty">No entries yet. Generate a brief to see reserve → settle → refund.</div></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="hd"><h2>Abuse controls</h2><span class="sub">live</span></div>
+        <div class="bd">
+          <div class="ctrls">
+            <div class="ctl"><span>Rate limit (5 / 60s)</span><span class="pill ok" id="pRate">OK</span></div>
+            <div class="ctl"><span>Concurrency (max 2)</span><span class="v" id="vConc">0 / 2</span></div>
+            <div class="ctl"><span>Monthly brief cap</span><span class="v" id="vCap">0 / 2</span></div>
+            <div class="ctl"><span>Account kill switch</span><span class="pill ok" id="pKill">Armed</span></div>
+            <div class="btnrow" style="margin-top:4px">
+              <button class="wide" id="sim">Simulate a power user (fire 20)</button>
+            </div>
+            <div class="btnrow">
+              <button class="wide" id="kill">Throw the kill switch</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- SECURITY -->
+  <section class="doc" id="security">
+    <h2>Security model applied in this prototype</h2>
+    <p class="lead">This client holds <b>no credential of any kind</b>. Inference, the credit ledger, and the
+    OpenRouter sub-keys all live server-side — which is why live generation is not wired into this static page.
+    The controls below are implemented in-browser here to demonstrate behaviour.</p>
+    <div class="layers">
+      <div class="layer"><div class="ln">L7</div><h4>Detection &amp; kill switch</h4><p>Alerts on spend rate and per-user COGS; a one-button halt that stops new enqueues.</p></div>
+      <div class="layer"><div class="ln">L6</div><h4>Secret management</h4><p>Keys in a managed store, rotated, never logged, never shipped to the client. CI secret scanning.</p></div>
+      <div class="layer"><div class="ln">L5</div><h4>OpenRouter controls</h4><p>Per-tenant sub-keys with hard credit limits + model allowlist; a global account spend cap.</p></div>
+      <div class="layer"><div class="ln">L4</div><h4>Job sandbox</h4><p>Fixed pipeline, hard step/token/page budgets, SSRF guards, injected web content treated as data.</p></div>
+      <div class="layer"><div class="ln">L3</div><h4>Credit ledger</h4><p>Prepaid, reserve-then-settle, never negative, idempotent, reconciled daily.</p></div>
+      <div class="layer"><div class="ln">L2</div><h4>API abuse defenses</h4><p>Server-side authorization, rate limits, concurrency caps, idempotency, subject dedupe.</p></div>
+      <div class="layer"><div class="ln">L1</div><h4>Account &amp; identity</h4><p>Email verification, bot detection, card-on-file to unlock free credits, velocity limits.</p></div>
+      <div class="layer"><div class="ln">—</div><h4>Why not client-side?</h4><p>A browser-held OpenRouter key is exactly the unbounded-loss scenario the plan forbids: it can be read from the bundle and spent directly.</p></div>
+    </div>
+  </section>
+
+  <footer>
+    PreMeet MVP prototype · the browser-side ledger and limits are illustrative. Backend (worker + ledger +
+    per-tenant OpenRouter sub-keys) is the next deploy — it cannot host on GitHub Pages because Pages is static-only
+    and must never hold the key.
+  </footer>
+</main>
+
+<div class="toast" id="toast"></div>
+
+<script>
+/* ---------------- config ---------------- */
+var TIERS = {
+  economy:  { label:"Economy",  sub:"~$0.075",  ceiling:0.12, actual:0.075 },
+  standard: { label:"Standard", sub:"~$0.154",  ceiling:0.50, actual:0.154 },
+  premium:  { label:"Premium",  sub:"~$0.415",  ceiling:1.00, actual:0.415 }
+};
+var PLANS = {
+  free:     { name:"Free",     price:"$0 · 2 briefs/mo",     cap:2,    balance:0.40 },
+  pro:      { name:"Pro",      price:"$15/mo · 20 briefs",   cap:20,   balance:3.20 },
+  research: { name:"Research", price:"$39/mo · 60 briefs",   cap:60,   balance:7.80 },
+  dept:     { name:"Department",price:"$199/mo · 300 briefs",cap:300,  balance:45.00 }
+};
+var RATE_MAX = 5, RATE_WINDOW = 60000, CONC_MAX = 2, DEDUPE_MS = 60000;
+
+var STEPS = ["Resolve identity","Fetch sources","Extract facts","Synthesize brief","Render PDF"];
+
+/* ---------------- state ---------------- */
+var state = {
+  plan:"free", tier:"standard", balance:PLANS.free.balance, used:0,
+  reserved:0, concurrency:0, kill:false, rateHits:[], inflight:{}, busy:false
+};
+
+/* ---------------- sample brief (real public data) ---------------- */
+var SAMPLE = {
+  name:"Igor Steinmacher", title:"Associate Professor · Northern Arizona University (SICCS)",
+  initials:"IS",
+  threads:[
+    "<b>Open-source onboarding &amp; retention</b> — why newcomers struggle, mentoring and tooling that help, maintainer load, governance.",
+    "<b>OSS sustainability &amp; governance</b> — community health, roles in practice, forecasting core-developer inactivity.",
+    "<b>AI × software development</b> — agents that support contributors (CommUnityBuddy, Sloan 2026), developers' use of generative AI.",
+    "<b>Learning through open source</b> — OSS-Doorway (NSF HSI), gamified contribution scaffolding, university↔community bridges."
+  ],
+  funding:[
+    "CommUnityBuddy (conversational agent for OSS contributors) — Alfred P. Sloan Foundation — $100K — 2026–",
+    "OSS-Doorway (open-source contribution learning environment) — NSF HSI — $499K — 2023–",
+    "Conversational agent for computational thinking (intro CS) — NSF IUSE — $405K — 2023–",
+    "data.table ecosystem for R — NSF POSE — $732K — 2023–26",
+    "Gender-inclusive open source through inclusive tools — NSF CHS — $529K — 2019–23"
+  ],
+  points:[
+    "<b>Broadening participation, from two directions</b> — his OSS-Doorway (HSI) + gender-inclusive tooling meet HTIL's K-12 BCI outreach.",
+    "<b>Conversational &amp; agentic AI for learners</b> — his novice-scaffolding agents × our LLM teaching tools → an onboarding agent inside a hands-on lab.",
+    "<b>CSCW meets HRI</b> — his human-aspects lens × our physiological/HRI measures → engagement, cognitive load, trust.",
+    "<b>Onboarding as an object of study</b> — his newcomer-onboarding instruments → a meta-study of onboarding into research labs.",
+    "<b>AI reshaping education &amp; research practice</b> — shared empirical-methods ground.",
+    "<b>Programmatic collaboration</b> — he runs SICCS graduate programs and designed NAU's new AI BS."
+  ],
+  sources:["igor.pro.br","Steinmacher_CV.pdf","experts.nau.edu","2026.fossy.ca"]
+};
+
+/* ---------------- helpers ---------------- */
+var $ = function(id){ return document.getElementById(id); };
+function money(n){ return "$" + n.toFixed(3); }
+function toast(msg){ var t=$("toast"); t.textContent=msg; t.classList.add("on");
+  clearTimeout(t._t); t._t=setTimeout(function(){ t.classList.remove("on"); },2600); }
+function norm(s){ return s.trim().toLowerCase().replace(/\s+/g," "); }
+
+/* ---------------- ledger ---------------- */
+var ledger = [];
+function post(type, amount, note){
+  var e = { t:new Date(), type:type, amount:amount, note:note };
+  ledger.unshift(e);
+  // prepend into the DOM
+  var box = $("ledger");
+  if(box.querySelector(".empty")) box.innerHTML = "";
+  var row = document.createElement("div");
+  row.className = "le";
+  var hhmm = String(e.t.getHours()).padStart(2,"0") + ":" + String(e.t.getMinutes()).padStart(2,"0");
+  row.innerHTML = '<div class="no">'+hhmm+'</div><div class="ty '+type.slice(0,3)+'">'+type.toUpperCase()+
+    '</div><div class="am">'+(amount>=0?"+":"")+amount.toFixed(3)+'</div>';
+  box.insertBefore(row, box.firstChild);
+  return e;
+}
+function renderBal(){
+  $("bal").textContent = money(state.balance);
+  var p = PLANS[state.plan];
+  $("planName").textContent = p.name;
+  $("planPrice").textContent = p.price;
+  $("usage").textContent = state.used + " of " + p.cap + " briefs used this month";
+  $("vCap").textContent = state.used + " / " + p.cap;
+  $("vConc").textContent = state.concurrency + " / " + CONC_MAX;
+}
+
+/* ---------------- rate limiting ---------------- */
+function rateCheck(){
+  var now = Date.now();
+  state.rateHits = state.rateHits.filter(function(t){ return now - t < RATE_WINDOW; });
+  if(state.rateHits.length >= RATE_MAX){
+    var wait = Math.ceil((RATE_WINDOW - (now - state.rateHits[0])) / 1000);
+    $("pRate").textContent = "THROTTLED " + wait + "s";
+    $("pRate").className = "pill lim";
+    return false;
+  }
+  $("pRate").textContent = state.rateHits.length + " / " + RATE_MAX;
+  $("pRate").className = "pill ok";
+  return true;
+}
+function useRate(){ state.rateHits.push(Date.now()); rateCheck(); }
+
+/* ---------------- generation ---------------- */
+function setSteps(active){
+  var ul = $("steps"); ul.innerHTML = "";
+  STEPS.forEach(function(s,i){
+    var li = document.createElement("li");
+    li.className = "step" + (i<active ? " done" : (i===active ? " run" : ""));
+    li.innerHTML = '<span class="ic"></span>' + s;
+    ul.appendChild(li);
+  });
+}
+
+function generate(){
+  if(state.busy) return;
+  var nm = $("nm").value.trim();
+  if(!nm){ toast("Enter a name first."); return; }
+
+  // --- L7: kill switch ---
+  if(state.kill){ post("denied",0,"global kill switch"); toast("Kill switch engaged — generation halted."); renderBal(); return; }
+  // --- L2: rate limit ---
+  if(!rateCheck()){
+    post("denied",0,"rate limit");
+    toast("Rate limited — 5 per minute. Throttled.");
+    renderBal(); return;
+  }
+  // --- L3: monthly cap ---
+  if(state.used >= PLANS[state.plan].cap){
+    post("denied",0,"monthly cap");
+    toast("Monthly brief cap reached — upgrade to continue.");
+    renderBal(); return;
+  }
+  // --- L2: concurrency ---
+  if(state.concurrency >= CONC_MAX){
+    post("denied",0,"concurrency cap");
+    toast("Too many in-flight jobs (max 2).");
+    renderBal(); return;
+  }
+  // --- L2: dedupe / join in-flight job ---
+  var key = norm(nm) + "|" + norm($("inst").value);
+  var last = state.inflight[key];
+  if(last && (Date.now() - last) < DEDUPE_MS){
+    post("denied",0,"joined in-flight job (no charge)");
+    toast("A brief for this person is already in flight — joined it, no new charge.");
+    renderBal(); return;
+  }
+
+  // --- L3: reserve-then-settle (the core control) ---
+  var tier = TIERS[state.tier];
+  if(state.balance < tier.ceiling){
+    post("denied",0,"insufficient balance");
+    toast("Insufficient credits to reserve " + money(tier.ceiling) + ".");
+    renderBal(); return;
+  }
+
+  state.busy = true;
+  state.inflight[key] = Date.now();
+  state.concurrency++;
+  useRate();
+
+  // reserve
+  state.reserved = tier.ceiling;
+  state.balance -= tier.ceiling;
+  post("reserve", -tier.ceiling, "worst-case ceiling (" + tier.label.toLowerCase() + ")");
+  $("mRes").textContent = money(tier.ceiling);
+  $("mSet").textContent = "—"; $("mRef").textContent = "—";
+  renderBal();
+  $("gen").disabled = true;
+  $("outCard").style.display = "none";
+
+  var i = 0;
+  setSteps(0);
+  function tick(){
+    if(i < STEPS.length){
+      setSteps(i+1);
+      i++;
+      setTimeout(tick, 430);
+    } else {
+      // settle to actual, refund the difference
+      var refund = tier.ceiling - tier.actual;
+      state.balance += refund;
+      state.reserved = 0;
+      state.used++;
+      state.concurrency--;
+      post("settle", refund, "refund: ceiling − actual");
+      post("settle", -tier.actual, "actual synthesis cost");
+
+      $("mSet").textContent = money(tier.actual);
+      $("mRef").textContent = money(refund);
+      renderBal();
+
+      renderBrief(nm);
+      state.busy = false;
+      $("gen").disabled = false;
+    }
+  }
+  setTimeout(tick, 430);
+}
+
+function renderBrief(nm){
+  var b = SAMPLE;
+  var html = "";
+  html += '<div class="bhead"><div class="avatar">'+b.initials+'</div><div>'+
+          '<h3>'+esc(nm)+'</h3><div class="af">'+b.title+'</div></div></div>';
+  html += '<div class="sec"><div class="k">Research threads</div><ul>'+
+          b.threads.map(function(x){return "<li>"+x+"</li>";}).join("")+'</ul></div>';
+  html += '<div class="sec"><div class="k">Funded portfolio</div><ul>'+
+          b.funding.map(function(x){return "<li>"+x+"</li>";}).join("")+'</ul></div>';
+  html += '<div class="sec"><div class="k">Talking points</div>';
+  html += '<div>';
+  b.points.forEach(function(p,i){
+    html += '<div class="tp"><span class="n">0'+(i+1)+'</span><span class="t">'+p+'</span></div>';
+  });
+  html += '</div></div>';
+  html += '<div class="sec"><div class="k">Sources</div><div class="srcs">'+
+          b.sources.map(function(s){return "<span>"+s+"</span>";}).join("")+'</div></div>';
+  $("out").innerHTML = html;
+  $("outSub").textContent = "sample data · live research not connected";
+  $("outCard").style.display = "block";
+}
+function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"})[c];}); }
+
+/* ---------------- power-user simulation ---------------- */
+function simulate(){
+  toast("Firing 20 rapid requests…");
+  var n = 0;
+  var iv = setInterval(function(){
+    generate();
+    if(++n >= 20) clearInterval(iv);
+  }, 130);
+}
+
+/* ---------------- init ---------------- */
+function buildTiers(){
+  var box = $("tiers"); box.innerHTML = "";
+  Object.keys(TIERS).forEach(function(k){
+    var d = document.createElement("div");
+    d.className = "tier" + (k===state.tier ? " sel" : "");
+    d.setAttribute("role","button"); d.tabIndex = 0;
+    d.innerHTML = '<div class="tt">'+TIERS[k].label+'</div><div class="ts">'+TIERS[k].sub+'/brief</div>';
+    d.onclick = function(){ state.tier = k; buildTiers(); };
+    d.onkeydown = function(e){ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); state.tier=k; buildTiers(); } };
+    box.appendChild(d);
+  });
+}
+document.querySelectorAll(".up button").forEach(function(btn){
+  btn.onclick = function(){
+    var p = btn.getAttribute("data-plan");
+    state.plan = p; state.balance += PLANS[p].balance; state.used = 0;
+    post("settle", PLANS[p].balance, "plan upgrade → " + PLANS[p].name);
+    toast("Upgraded to " + PLANS[p].name + " — credits added.");
+    renderBal();
+  };
+});
+$("gen").onclick = generate;
+$("sim").onclick = simulate;
+$("kill").onclick = function(){
+  state.kill = !state.kill;
+  $("pKill").textContent = state.kill ? "ENGAGED" : "Armed";
+  $("pKill").className = "pill " + (state.kill ? "lim" : "ok");
+  $("kill").textContent = state.kill ? "Re-arm the kill switch" : "Throw the kill switch";
+  toast(state.kill ? "Kill switch engaged — all generation halted." : "Kill switch re-armed.");
+};
+$("nm").addEventListener("keydown", function(e){ if(e.key==="Enter") generate(); });
+
+buildTiers();
+setSteps(-1);
+renderBal();
+</script>
+</body>
+</html>
