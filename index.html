@@ -501,9 +501,20 @@ function esc(s){ return String(s).replace(/[&<>"]/g,function(c){return ({"&":"&a
 
 /* ---------------- power-user simulation ---------------- */
 function simulate(){
-  toast("Firing 20 rapid requests…");
+  // A "power user" is on a paid plan — switch to Pro so the demo exercises the
+  // rate limiter (5/60s) rather than immediately exhausting the Free monthly cap.
+  if(state.plan === "free"){
+    state.plan = "pro"; state.balance += PLANS.pro.balance; state.used = 0;
+    post("release", PLANS.pro.balance, "plan upgrade → Pro (power-user simulation)");
+    renderBal();
+  }
+  toast("Firing 20 rapid requests on a Pro account…");
+  var names = ["A. Rivera","B. Chen","C. Okafor","D. Novak","E. Haddad","F. Silva","G. Park",
+    "H. Mbeki","I. Rossi","J. Lang","K. Das","L. Moreau","M. Idris","N. Costa","O. Weber",
+    "P. Singh","Q. Zhang","R. Costa","S. Alvi","T. Berg"];
   var n = 0;
   var iv = setInterval(function(){
+    $("nm").value = names[n % names.length];
     generate();
     if(++n >= 20) clearInterval(iv);
   }, 130);
