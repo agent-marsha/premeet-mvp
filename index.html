@@ -366,17 +366,18 @@ function renderBal(){
 function rateCheck(){
   var now = Date.now();
   state.rateHits = state.rateHits.filter(function(t){ return now - t < RATE_WINDOW; });
-  if(state.rateHits.length >= RATE_MAX){
+  state.rateHits.push(now);   // every attempt counts toward the limit
+  var n = state.rateHits.length;
+  if(n > RATE_MAX){
     var wait = Math.ceil((RATE_WINDOW - (now - state.rateHits[0])) / 1000);
     $("pRate").textContent = "THROTTLED " + wait + "s";
     $("pRate").className = "pill lim";
     return false;
   }
-  $("pRate").textContent = state.rateHits.length + " / " + RATE_MAX;
+  $("pRate").textContent = n + " / " + RATE_MAX;
   $("pRate").className = "pill ok";
   return true;
 }
-function useRate(){ state.rateHits.push(Date.now()); rateCheck(); }
 
 /* ---------------- generation ---------------- */
 function setSteps(active){
@@ -390,7 +391,6 @@ function setSteps(active){
 }
 
 function generate(){
-  if(state.busy) return;
   var nm = $("nm").value.trim();
   if(!nm){ toast("Enter a name first."); return; }
 
@@ -431,10 +431,8 @@ function generate(){
     renderBal(); return;
   }
 
-  state.busy = true;
   state.inflight[key] = Date.now();
   state.concurrency++;
-  useRate();
 
   // reserve
   state.reserved = tier.ceiling;
@@ -443,7 +441,6 @@ function generate(){
   $("mRes").textContent = money(tier.ceiling);
   $("mSet").textContent = "—"; $("mRef").textContent = "—";
   renderBal();
-  $("gen").disabled = true;
   $("outCard").style.display = "none";
 
   var i = 0;
@@ -469,8 +466,6 @@ function generate(){
       renderBal();
 
       renderBrief(nm);
-      state.busy = false;
-      $("gen").disabled = false;
     }
   }
   setTimeout(tick, 430);
