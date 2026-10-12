@@ -286,10 +286,10 @@ var TIERS = {
   premium:  { label:"Premium",  sub:"~$0.415",  ceiling:1.00, actual:0.415 }
 };
 var PLANS = {
-  free:     { name:"Free",     price:"$0 · 2 briefs/mo",     cap:2,    balance:0.40 },
-  pro:      { name:"Pro",      price:"$15/mo · 20 briefs",   cap:20,   balance:3.20 },
-  research: { name:"Research", price:"$39/mo · 60 briefs",   cap:60,   balance:7.80 },
-  dept:     { name:"Department",price:"$199/mo · 300 briefs",cap:300,  balance:45.00 }
+  free:     { name:"Free",     price:"$0 · 2 briefs/mo",     cap:2,    balance:1.20 },
+  pro:      { name:"Pro",      price:"$15/mo · 20 briefs",   cap:20,   balance:12.00 },
+  research: { name:"Research", price:"$39/mo · 60 briefs",   cap:60,   balance:35.00 },
+  dept:     { name:"Department",price:"$199/mo · 300 briefs",cap:300,  balance:160.00 }
 };
 var RATE_MAX = 5, RATE_WINDOW = 60000, CONC_MAX = 2, DEDUPE_MS = 60000;
 
@@ -460,7 +460,7 @@ function generate(){
       state.reserved = 0;
       state.used++;
       state.concurrency--;
-      post("settle", refund, "refund: ceiling − actual");
+      post("release", refund, "refund: ceiling − actual");
       post("settle", -tier.actual, "actual synthesis cost");
 
       $("mSet").textContent = money(tier.actual);
